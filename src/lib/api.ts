@@ -67,17 +67,17 @@ export const api = {
   },
   
   topics: {
-    list: () => request<any[]>('/topics'),
-    create: (data: any) => request<any>('/topics', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => request<any>(`/topics/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => request<any>(`/topics/${id}`, { method: 'DELETE' }),
+    list: () => request<any[]>('/learning/topics'),
+    create: (data: any) => request<any>('/learning/topics', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => request<any>(`/learning/topics/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => request<any>(`/learning/topics/${id}`, { method: 'DELETE' }),
   },
   
   lessons: {
-    list: () => request<any[]>('/lessons'),
-    create: (data: any) => request<any>('/lessons', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => request<any>(`/lessons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => request<any>(`/lessons/${id}`, { method: 'DELETE' }),
+    list: () => request<any[]>('/learning/lessons'),
+    create: (data: any) => request<any>('/learning/lessons', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => request<any>(`/learning/lessons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => request<any>(`/learning/lessons/${id}`, { method: 'DELETE' }),
   },
 
   experience: {

@@ -102,7 +102,11 @@ async function startServer() {
       const sessions = await getSessions();
       if (sessions.has(token)) {
         return next();
+      } else {
+        console.warn(`Admin access denied: Session not found in store for token: ${token.substring(0, 5)}...`);
       }
+    } else {
+      console.warn(`Admin access denied: No Authorization header for ${req.method} ${req.path}`);
     }
     res.status(401).json({ message: 'Unauthorized' });
   };
@@ -182,8 +186,8 @@ async function startServer() {
   setupCRUD('projects', 'projects.json');
   setupCRUD('blog', 'blog.json');
   setupCRUD('creative', 'creative.json');
-  setupCRUD('topics', 'topics.json');
-  setupCRUD('lessons', 'lessons.json');
+  setupCRUD('learning/topics', 'topics.json');
+  setupCRUD('learning/lessons', 'lessons.json');
   setupCRUD('experience', 'experience.json');
   setupCRUD('skills', 'skills.json');
 
