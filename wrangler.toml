@@ -5,7 +5,7 @@ compatibility_date = "2024-04-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "portfolio-db"
-database_id = "your-database-id-here"
+database_id = "98b0f55e-2920-4e33-b907-182cbc391526"
 
 [vars]
 JWT_SECRET = "change-me-in-dashboard"
