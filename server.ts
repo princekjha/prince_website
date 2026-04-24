@@ -135,11 +135,12 @@ async function startServer() {
     const { password, email } = req.body;
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
     
-    if ((password === ADMIN_PASSWORD || email === "pjha3913@gmail.com") && ADMIN_EMAIL_WHITELIST.includes(email)) {
+    if (password === ADMIN_PASSWORD && ADMIN_EMAIL_WHITELIST.includes(email)) {
       const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
       await saveSession(token);
       res.json({ success: true, token });
     } else {
+      console.warn(`Login failed for ${email}`);
       res.status(401).json({ success: false, message: 'Invalid password or verification failed' });
     }
   });
