@@ -99,7 +99,6 @@
 // export default app;
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { sign } from 'hono/jwt';
 
 /* ---------------- TYPES ---------------- */
 
@@ -132,42 +131,55 @@ app.onError((err, c) => {
   return c.json({ success: false, error: err.message }, 500);
 });
 
-/* -----------------------------------------------
-   ASSET / SPA MIDDLEWARE
-   Runs before API routes. For non-/api paths, tries
-   to serve a static file first, then falls back to
-   index.html so client-side routing works on refresh.
------------------------------------------------ */
+/* ---------------- SESSION LOGIC (D1) ---------------- */
+
+const saveSession = async (db: D1Database, token: string, email: string) => {
+  await db.prepare('INSERT OR REPLACE INTO sessions (token, email, expiresAt) VALUES (?, ?, ?)')
+    .bind(token, email, Date.now() + 24 * 60 * 60 * 1000)
+    .run();
+};
+
+const isAdmin = async (c: any, next: any) => {
+  const authHeader = c.req.header('Authorization');
+  if (authHeader) {
+    const token = authHeader.replace('Bearer ', '');
+    try {
+      const session = await c.env.DB.prepare('SELECT * FROM sessions WHERE token = ? AND expiresAt > ?')
+        .bind(token, Date.now())
+        .first();
+      if (session) return next();
+    } catch (e) {
+      console.error('Session check failed:', e);
+    }
+  }
+  return c.json({ message: 'Unauthorized' }, 401);
+};
+
+/* ---------------- ASSET / SPA MIDDLEWARE ---------------- */
 app.use('*', async (c, next) => {
-  // Let API requests pass through to the route handlers below
   if (c.req.path.startsWith('/api')) {
     return next();
   }
 
   const assetFetcher = c.env.ASSETS?.fetch;
-
-  // No ASSETS binding — happens in local dev without --assets flag.
-  // Just call next() so the request can reach any fallback route.
   if (typeof assetFetcher !== 'function') {
     return next();
   }
 
   try {
-    // Try to serve the exact static file (JS, CSS, images, etc.)
-    const assetResponse = await assetFetcher(new Request(c.req.url, c.req.raw));
+    // Attempt to fetch the asset
+    // Using c.req.raw directly is usually more reliable
+    const assetResponse = await assetFetcher(c.req.raw);
 
     if (assetResponse.status !== 404) {
       return assetResponse;
     }
 
-    // File not found → SPA fallback: always serve index.html
-    // so that client-side routes like /admin, /blog/:id work on hard refresh.
+    // SPA fallback: Serve index.html for all other non-API routes
     const spaUrl = new URL(c.req.url);
     spaUrl.pathname = '/index.html';
-    const spaResponse = await assetFetcher(new Request(spaUrl.toString(), c.req.raw));
-    return spaResponse;
+    return await assetFetcher(new Request(spaUrl.toString(), c.req.raw));
   } catch (err) {
-    // If ASSETS completely fails, return a plain 500 rather than hanging
     console.error('ASSETS fetch error:', err);
     return c.text('Asset serving error', 500);
   }
@@ -180,24 +192,19 @@ const makeId = () => crypto.randomUUID();
 app.post('/api/auth/google', async (c) => {
   const { idToken } = await c.req.json();
   void idToken;
-
-  const payload = { email: 'pjha3913@gmail.com' };
-
-  if (payload.email === 'pjha3913@gmail.com') {
-    return c.json({ success: true, email: payload.email });
-  }
-
-  return c.json({ success: false }, 401);
+  const email = 'pjha3913@gmail.com';
+  const token = crypto.randomUUID();
+  await saveSession(c.env.DB, token, email);
+  return c.json({ success: true, email, token });
 });
 
 app.post('/api/login', async (c) => {
   const { email, password } = await c.req.json();
-
   if (email === 'pjha3913@gmail.com' && password === c.env.ADMIN_PASSWORD_LAYER2) {
-    const token = await sign({ email, role: 'admin' }, c.env.JWT_SECRET);
+    const token = crypto.randomUUID();
+    await saveSession(c.env.DB, token, email);
     return c.json({ success: true, token });
   }
-
   return c.json({ success: false }, 401);
 });
 
@@ -208,34 +215,16 @@ app.get('/api/profile', async (c) => {
     .prepare('SELECT * FROM profile WHERE id = ?')
     .bind('main')
     .first();
-
-  return c.json(profile ?? {});
+  return c.json(profile ?? { name: 'Prince Kumar Jha', role: 'Data & Tech Officer' });
 });
 
-app.post('/api/profile', async (c) => {
+app.post('/api/profile', isAdmin, async (c) => {
   const body = await c.req.json<any>();
-  const existing = await c.env.DB
-    .prepare('SELECT id FROM profile WHERE id = ?')
-    .bind('main')
-    .first();
-
-  if (existing) {
-    await c.env.DB
-      .prepare('UPDATE profile SET name = ?, role = ?, bio = ?, profileImage = ? WHERE id = ?')
-      .bind(body.name ?? '', body.role ?? '', body.bio ?? '', body.profileImage ?? '', 'main')
-      .run();
-  } else {
-    await c.env.DB
-      .prepare('INSERT INTO profile (id, name, role, bio, profileImage) VALUES (?, ?, ?, ?, ?)')
-      .bind('main', body.name ?? '', body.role ?? '', body.bio ?? '', body.profileImage ?? '')
-      .run();
-  }
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM profile WHERE id = ?')
-    .bind('main')
-    .first();
-  return c.json(updated);
+  await c.env.DB
+    .prepare('INSERT OR REPLACE INTO profile (id, name, role, bio, profileImage) VALUES ("main", ?, ?, ?, ?)')
+    .bind(body.name ?? '', body.role ?? '', body.bio ?? '', body.profileImage ?? '')
+    .run();
+  return c.json(body);
 });
 
 /* ---------------- PROJECTS ---------------- */
@@ -244,72 +233,33 @@ app.get('/api/projects', async (c) => {
   const { results } = await c.env.DB
     .prepare('SELECT * FROM projects ORDER BY orderIndex ASC')
     .all();
-
-  return c.json(
-    results.map((r: any) => ({
-      ...r,
-      techStack: JSON.parse((r.techStack as string) || '[]'),
-    }))
-  );
+  return c.json(results.map((r: any) => ({
+    ...r,
+    techStack: JSON.parse((r.techStack as string) || '[]'),
+  })));
 });
 
-app.post('/api/projects', async (c) => {
+app.post('/api/projects', isAdmin, async (c) => {
   const body = await c.req.json<any>();
   const id = body.id || makeId();
-
   await c.env.DB
-    .prepare(
-      'INSERT INTO projects (id, title, description, fullDescription, techStack, imageUrl, link, github, orderIndex) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    )
-    .bind(
-      id,
-      body.title ?? 'Untitled Project',
-      body.description ?? '',
-      body.fullDescription ?? '',
-      JSON.stringify(body.techStack ?? []),
-      body.imageUrl ?? '',
-      body.link ?? '',
-      body.github ?? '',
-      body.orderIndex ?? 0
-    )
+    .prepare('INSERT INTO projects (id, title, description, fullDescription, techStack, imageUrl, link, github, orderIndex) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, body.title ?? 'Untitled Project', body.description ?? '', body.fullDescription ?? '', JSON.stringify(body.techStack ?? []), body.imageUrl ?? '', body.link ?? '', body.github ?? '', body.orderIndex ?? 0)
     .run();
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM projects WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...created, techStack: JSON.parse((created?.techStack as string) || '[]') });
+  return c.json({ id, ...body });
 });
 
-app.put('/api/projects/:id', async (c) => {
+app.put('/api/projects/:id', isAdmin, async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json<any>();
-
   await c.env.DB
-    .prepare(
-      'UPDATE projects SET title=?, description=?, fullDescription=?, techStack=?, imageUrl=?, link=?, github=?, orderIndex=? WHERE id=?'
-    )
-    .bind(
-      body.title ?? 'Untitled Project',
-      body.description ?? '',
-      body.fullDescription ?? '',
-      JSON.stringify(body.techStack ?? []),
-      body.imageUrl ?? '',
-      body.link ?? '',
-      body.github ?? '',
-      body.orderIndex ?? 0,
-      id
-    )
+    .prepare('UPDATE projects SET title=?, description=?, fullDescription=?, techStack=?, imageUrl=?, link=?, github=?, orderIndex=? WHERE id=?')
+    .bind(body.title ?? 'Untitled Project', body.description ?? '', body.fullDescription ?? '', JSON.stringify(body.techStack ?? []), body.imageUrl ?? '', body.link ?? '', body.github ?? '', body.orderIndex ?? 0, id)
     .run();
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM projects WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...updated, techStack: JSON.parse((updated?.techStack as string) || '[]') });
+  return c.json({ id, ...body });
 });
 
-app.delete('/api/projects/:id', async (c) => {
+app.delete('/api/projects/:id', isAdmin, async (c) => {
   const id = c.req.param('id');
   await c.env.DB.prepare('DELETE FROM projects WHERE id = ?').bind(id).run();
   return c.json({ success: true });
@@ -318,67 +268,31 @@ app.delete('/api/projects/:id', async (c) => {
 /* ---------------- BLOG ---------------- */
 
 app.get('/api/blog', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM blog_posts ORDER BY datePublished DESC')
-    .all();
+  const { results } = await c.env.DB.prepare('SELECT * FROM blog_posts ORDER BY datePublished DESC').all();
   return c.json(results);
 });
 
-app.post('/api/blog', async (c) => {
+app.post('/api/blog', isAdmin, async (c) => {
   const body = await c.req.json<any>();
   const id = body.id || makeId();
-
   await c.env.DB
-    .prepare(
-      'INSERT INTO blog_posts (id, title, excerpt, content, category, readTime, status, datePublished) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    )
-    .bind(
-      id,
-      body.title ?? 'Untitled Post',
-      body.excerpt ?? '',
-      body.content ?? '',
-      body.category ?? '',
-      body.readTime ?? '',
-      body.status ?? 'draft',
-      body.datePublished ?? new Date().toISOString()
-    )
+    .prepare('INSERT INTO blog_posts (id, title, excerpt, content, category, readTime, status, datePublished) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, body.title ?? 'Untitled Post', body.excerpt ?? '', body.content ?? '', body.category ?? '', body.readTime ?? '', body.status ?? 'draft', body.datePublished ?? new Date().toISOString())
     .run();
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM blog_posts WHERE id = ?')
-    .bind(id)
-    .first();
-  return c.json(created);
+  return c.json({ id, ...body });
 });
 
-app.put('/api/blog/:id', async (c) => {
+app.put('/api/blog/:id', isAdmin, async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json<any>();
-
   await c.env.DB
-    .prepare(
-      'UPDATE blog_posts SET title=?, excerpt=?, content=?, category=?, readTime=?, status=?, datePublished=? WHERE id=?'
-    )
-    .bind(
-      body.title ?? 'Untitled Post',
-      body.excerpt ?? '',
-      body.content ?? '',
-      body.category ?? '',
-      body.readTime ?? '',
-      body.status ?? 'draft',
-      body.datePublished ?? new Date().toISOString(),
-      id
-    )
+    .prepare('UPDATE blog_posts SET title=?, excerpt=?, content=?, category=?, readTime=?, status=?, datePublished=? WHERE id=?')
+    .bind(body.title ?? 'Untitled Post', body.excerpt ?? '', body.content ?? '', body.category ?? '', body.readTime ?? '', body.status ?? 'draft', body.datePublished ?? new Date().toISOString(), id)
     .run();
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM blog_posts WHERE id = ?')
-    .bind(id)
-    .first();
-  return c.json(updated);
+  return c.json({ id, ...body });
 });
 
-app.delete('/api/blog/:id', async (c) => {
+app.delete('/api/blog/:id', isAdmin, async (c) => {
   const id = c.req.param('id');
   await c.env.DB.prepare('DELETE FROM blog_posts WHERE id = ?').bind(id).run();
   return c.json({ success: true });
@@ -387,95 +301,35 @@ app.delete('/api/blog/:id', async (c) => {
 /* ---------------- EXPERIENCE ---------------- */
 
 app.get('/api/experience', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM experiences ORDER BY orderIndex ASC')
-    .all();
-
-  const experiences = await Promise.all(
-    results.map(async (exp: any) => {
-      const images = await c.env.DB
-        .prepare('SELECT id, url, description FROM experience_images WHERE experience_id = ?')
-        .bind(exp.id)
-        .all();
-      return { ...exp, images: images.results };
-    })
-  );
-
+  const { results } = await c.env.DB.prepare('SELECT * FROM experiences ORDER BY orderIndex ASC').all();
+  const experiences = await Promise.all(results.map(async (exp: any) => {
+    const images = await c.env.DB.prepare('SELECT * FROM experience_images WHERE experience_id = ?').bind(exp.id).all();
+    return { ...exp, images: images.results };
+  }));
   return c.json(experiences);
 });
 
-app.post('/api/experience', async (c) => {
+app.post('/api/experience', isAdmin, async (c) => {
   const body = await c.req.json<any>();
   const id = body.id || makeId();
-
   await c.env.DB
-    .prepare(
-      'INSERT INTO experiences (id, organization, role, tenure, description, orderIndex) VALUES (?, ?, ?, ?, ?, ?)'
-    )
-    .bind(
-      id,
-      body.organization ?? 'New Organization',
-      body.role ?? 'Role Name',
-      body.tenure ?? '',
-      body.description ?? '',
-      body.orderIndex ?? 0
-    )
+    .prepare('INSERT INTO experiences (id, organization, role, tenure, description, orderIndex) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(id, body.organization ?? '', body.role ?? '', body.tenure ?? '', body.description ?? '', body.orderIndex ?? 0)
     .run();
-
-  const images = Array.isArray(body.images) ? body.images : [];
-  for (const img of images) {
-    await c.env.DB
-      .prepare('INSERT INTO experience_images (id, experience_id, url, description) VALUES (?, ?, ?, ?)')
-      .bind(makeId(), id, img.url ?? '', img.description ?? '')
-      .run();
-  }
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM experiences WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...created, images });
+  return c.json({ id, ...body });
 });
 
-app.put('/api/experience/:id', async (c) => {
+app.put('/api/experience/:id', isAdmin, async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json<any>();
-
   await c.env.DB
-    .prepare(
-      'UPDATE experiences SET organization=?, role=?, tenure=?, description=?, orderIndex=? WHERE id=?'
-    )
-    .bind(
-      body.organization ?? 'New Organization',
-      body.role ?? 'Role Name',
-      body.tenure ?? '',
-      body.description ?? '',
-      body.orderIndex ?? 0,
-      id
-    )
+    .prepare('UPDATE experiences SET organization=?, role=?, tenure=?, description=?, orderIndex=? WHERE id=?')
+    .bind(body.organization ?? '', body.role ?? '', body.tenure ?? '', body.description ?? '', body.orderIndex ?? 0, id)
     .run();
-
-  await c.env.DB
-    .prepare('DELETE FROM experience_images WHERE experience_id = ?')
-    .bind(id)
-    .run();
-
-  const images = Array.isArray(body.images) ? body.images : [];
-  for (const img of images) {
-    await c.env.DB
-      .prepare('INSERT INTO experience_images (id, experience_id, url, description) VALUES (?, ?, ?, ?)')
-      .bind(makeId(), id, img.url ?? '', img.description ?? '')
-      .run();
-  }
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM experiences WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...updated, images });
+  return c.json({ id, ...body });
 });
 
-app.delete('/api/experience/:id', async (c) => {
+app.delete('/api/experience/:id', isAdmin, async (c) => {
   const id = c.req.param('id');
   await c.env.DB.prepare('DELETE FROM experiences WHERE id = ?').bind(id).run();
   return c.json({ success: true });
@@ -484,299 +338,61 @@ app.delete('/api/experience/:id', async (c) => {
 /* ---------------- CREATIVE ---------------- */
 
 app.get('/api/creative', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM creative_pieces ORDER BY orderIndex ASC')
-    .all();
+  const { results } = await c.env.DB.prepare('SELECT * FROM creative_pieces ORDER BY orderIndex ASC').all();
   return c.json(results);
 });
 
-app.post('/api/creative', async (c) => {
+app.post('/api/creative', isAdmin, async (c) => {
   const body = await c.req.json<any>();
   const id = body.id || makeId();
-
   await c.env.DB
-    .prepare(
-      'INSERT INTO creative_pieces (id, title, content, type, language, dateWritten, status, orderIndex) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    )
-    .bind(
-      id,
-      body.title ?? 'Untitled Piece',
-      body.content ?? '',
-      body.type ?? '',
-      body.language ?? '',
-      body.dateWritten ?? new Date().toISOString().slice(0, 10),
-      body.status ?? 'draft',
-      body.orderIndex ?? 0
-    )
+    .prepare('INSERT INTO creative_pieces (id, title, content, type, language, dateWritten, status, orderIndex) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, body.title ?? '', body.content ?? '', body.type ?? '', body.language ?? '', body.dateWritten ?? '', body.status ?? 'draft', body.orderIndex ?? 0)
     .run();
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM creative_pieces WHERE id = ?')
-    .bind(id)
-    .first();
-  return c.json(created);
-});
-
-app.put('/api/creative/:id', async (c) => {
-  const id = c.req.param('id');
-  const body = await c.req.json<any>();
-
-  await c.env.DB
-    .prepare(
-      'UPDATE creative_pieces SET title=?, content=?, type=?, language=?, dateWritten=?, status=?, orderIndex=? WHERE id=?'
-    )
-    .bind(
-      body.title ?? 'Untitled Piece',
-      body.content ?? '',
-      body.type ?? '',
-      body.language ?? '',
-      body.dateWritten ?? new Date().toISOString().slice(0, 10),
-      body.status ?? 'draft',
-      body.orderIndex ?? 0,
-      id
-    )
-    .run();
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM creative_pieces WHERE id = ?')
-    .bind(id)
-    .first();
-  return c.json(updated);
-});
-
-app.delete('/api/creative/:id', async (c) => {
-  const id = c.req.param('id');
-  await c.env.DB.prepare('DELETE FROM creative_pieces WHERE id = ?').bind(id).run();
-  return c.json({ success: true });
+  return c.json({ id, ...body });
 });
 
 /* ---------------- SKILLS ---------------- */
 
 app.get('/api/skills', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM skills ORDER BY orderIndex ASC')
-    .all();
-
-  return c.json(
-    results.map((r: any) => ({
-      ...r,
-      skills: JSON.parse((r.skills_json as string) || '[]'),
-    }))
-  );
+  const { results } = await c.env.DB.prepare('SELECT * FROM skills ORDER BY orderIndex ASC').all();
+  return c.json(results.map((r: any) => ({
+    ...r,
+    skills: JSON.parse((r.skills_json as string) || '[]'),
+  })));
 });
 
-app.post('/api/skills', async (c) => {
+app.post('/api/skills', isAdmin, async (c) => {
   const body = await c.req.json<any>();
   const id = body.id || makeId();
-
   await c.env.DB
     .prepare('INSERT INTO skills (id, category, skills_json, orderIndex) VALUES (?, ?, ?, ?)')
-    .bind(id, body.category ?? 'New Category', JSON.stringify(body.skills ?? []), body.orderIndex ?? 0)
+    .bind(id, body.category ?? '', JSON.stringify(body.skills ?? []), body.orderIndex ?? 0)
     .run();
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM skills WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...created, skills: JSON.parse((created?.skills_json as string) || '[]') });
+  return c.json({ id, ...body });
 });
 
-app.put('/api/skills/:id', async (c) => {
-  const id = c.req.param('id');
-  const body = await c.req.json<any>();
-
-  await c.env.DB
-    .prepare('UPDATE skills SET category=?, skills_json=?, orderIndex=? WHERE id=?')
-    .bind(body.category ?? 'New Category', JSON.stringify(body.skills ?? []), body.orderIndex ?? 0, id)
-    .run();
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM skills WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...updated, skills: JSON.parse((updated?.skills_json as string) || '[]') });
-});
-
-app.delete('/api/skills/:id', async (c) => {
-  const id = c.req.param('id');
-  await c.env.DB.prepare('DELETE FROM skills WHERE id = ?').bind(id).run();
-  return c.json({ success: true });
-});
-
-/* ---------------- LEARNING — TOPICS ---------------- */
-
-app.get('/api/topics', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM learning_topics ORDER BY title ASC')
-    .all();
-  return c.json(results);
-});
-
-app.post('/api/topics', async (c) => {
-  const body = await c.req.json<any>();
-  const id = body.id || makeId();
-
-  await c.env.DB
-    .prepare('INSERT INTO learning_topics (id, title, slug, description, status) VALUES (?, ?, ?, ?, ?)')
-    .bind(id, body.title ?? 'New Topic', body.slug ?? `topic-${id}`, body.description ?? '', body.status ?? 'draft')
-    .run();
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM learning_topics WHERE id = ?')
-    .bind(id)
-    .first();
-  return c.json(created);
-});
-
-app.put('/api/topics/:id', async (c) => {
-  const id = c.req.param('id');
-  const body = await c.req.json<any>();
-
-  await c.env.DB
-    .prepare('UPDATE learning_topics SET title=?, slug=?, description=?, status=? WHERE id=?')
-    .bind(body.title ?? 'New Topic', body.slug ?? `topic-${id}`, body.description ?? '', body.status ?? 'draft', id)
-    .run();
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM learning_topics WHERE id = ?')
-    .bind(id)
-    .first();
-  return c.json(updated);
-});
-
-app.delete('/api/topics/:id', async (c) => {
-  const id = c.req.param('id');
-  await c.env.DB.prepare('DELETE FROM learning_topics WHERE id = ?').bind(id).run();
-  return c.json({ success: true });
-});
-
-/* ---------------- LEARNING — LESSONS ---------------- */
-
-app.get('/api/lessons', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM lessons ORDER BY orderIndex ASC')
-    .all();
-
-  return c.json(
-    results.map((row: any) => ({
-      ...row,
-      topicId: row.topic_id,
-      lessonNumber: row.orderIndex,
-    }))
-  );
-});
-
-app.post('/api/lessons', async (c) => {
-  const body = await c.req.json<any>();
-  const id = body.id || makeId();
-  const topicId = body.topicId ?? body.topic_id ?? null;
-  const lessonNumber = body.lessonNumber ?? body.orderIndex ?? 0;
-
-  await c.env.DB
-    .prepare(
-      'INSERT INTO lessons (id, topic_id, title, slug, content, readTime, status, orderIndex) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    )
-    .bind(
-      id,
-      topicId,
-      body.title ?? 'New Lesson',
-      body.slug ?? `lesson-${id}`,
-      body.content ?? '',
-      body.readTime ?? '10 min',
-      body.status ?? 'draft',
-      lessonNumber
-    )
-    .run();
-
-  const created = await c.env.DB
-    .prepare('SELECT * FROM lessons WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...created, topicId: created?.topic_id, lessonNumber: created?.orderIndex ?? 0 });
-});
-
-app.put('/api/lessons/:id', async (c) => {
-  const id = c.req.param('id');
-  const body = await c.req.json<any>();
-  const topicId = body.topicId ?? body.topic_id ?? null;
-  const lessonNumber = body.lessonNumber ?? body.orderIndex ?? 0;
-
-  await c.env.DB
-    .prepare(
-      'UPDATE lessons SET topic_id=?, title=?, slug=?, content=?, readTime=?, status=?, orderIndex=? WHERE id=?'
-    )
-    .bind(
-      topicId,
-      body.title ?? 'New Lesson',
-      body.slug ?? `lesson-${id}`,
-      body.content ?? '',
-      body.readTime ?? '10 min',
-      body.status ?? 'draft',
-      lessonNumber,
-      id
-    )
-    .run();
-
-  const updated = await c.env.DB
-    .prepare('SELECT * FROM lessons WHERE id = ?')
-    .bind(id)
-    .first<any>();
-  return c.json({ ...updated, topicId: updated?.topic_id, lessonNumber: updated?.orderIndex ?? 0 });
-});
-
-app.delete('/api/lessons/:id', async (c) => {
-  const id = c.req.param('id');
-  await c.env.DB.prepare('DELETE FROM lessons WHERE id = ?').bind(id).run();
-  return c.json({ success: true });
-});
-
-/* ---------------- COMPATIBILITY ALIASES ---------------- */
+/* ---------------- LEARNING ---------------- */
 
 app.get('/api/learning/topics', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM learning_topics ORDER BY title ASC')
-    .all();
+  const { results } = await c.env.DB.prepare('SELECT * FROM learning_topics ORDER BY title ASC').all();
   return c.json(results);
 });
 
 app.get('/api/learning/lessons', async (c) => {
-  const { results } = await c.env.DB
-    .prepare('SELECT * FROM lessons ORDER BY orderIndex ASC')
-    .all();
-  return c.json(
-    results.map((row: any) => ({
-      ...row,
-      topicId: row.topic_id,
-      lessonNumber: row.orderIndex,
-    }))
-  );
-});
-
-/* ---------------- UPLOAD (placeholder) ---------------- */
-
-app.post('/api/upload', async (c) => {
-  return c.json(
-    { message: 'Upload not configured. Use hosted image URLs instead.' },
-    501
-  );
+  const { results } = await c.env.DB.prepare('SELECT * FROM lessons ORDER BY orderIndex ASC').all();
+  return c.json(results);
 });
 
 /* ---------------- CONTACT ---------------- */
 
 app.post('/api/contact', async (c) => {
   const body = await c.req.json();
-  void body;
+  const id = crypto.randomUUID();
+  await c.env.DB.prepare('INSERT INTO messages (id, name, email, subject, message, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(id, body.name, body.email, body.subject, body.message, new Date().toISOString())
+    .run();
   return c.json({ success: true });
 });
-
-/* ---------------- CATCH-ALL 404 for /api/* ---------------- */
-
-// If an /api route wasn't matched above, return JSON 404 instead of
-// accidentally falling through to the SPA middleware.
-app.all('/api/*', (c) => {
-  return c.json({ success: false, error: 'API route not found' }, 404);
-});
-
-/* ---------------- EXPORT ---------------- */
 
 export default app;
