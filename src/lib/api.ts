@@ -9,18 +9,27 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   };
 
   // Only set default Content-Type if not already set and not FormData
-  if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+  const isFormData = options.body instanceof FormData;
+  if (!headers['Content-Type'] && !isFormData) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // If Content-Type is explicitly 'multipart/form-data-auto', remove it so fetch can set correct boundary
-  if (headers['Content-Type'] === 'DELETE_THIS_HEADER') {
+  // If we're sending FormData, we MUST let fetch set the Content-Type with the boundary
+  if (isFormData) {
     delete headers['Content-Type'];
   }
 
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  
+  if (response.status === 401 && path !== '/login') {
+    localStorage.removeItem('admin_token');
+    window.location.href = '/login';
+    throw new Error('Unauthorized - Session expired');
+  }
+
   if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `API Error: ${response.statusText}`);
   }
   return response.json();
 }
@@ -96,7 +105,6 @@ export const api = {
     return request<{ url: string }>('/upload', {
       method: 'POST',
       body: formData,
-      headers: { 'Content-Type': 'DELETE_THIS_HEADER' },
     });
   },
   

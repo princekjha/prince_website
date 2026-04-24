@@ -83,32 +83,45 @@ async function startServer() {
   const getSessions = async () => {
     try {
       const data = await fs.readFile(SESSIONS_FILE, 'utf-8');
-      return new Set<string>(JSON.parse(data));
-    } catch {
+      if (!data || data.trim() === '') return new Set<string>();
+      const parsed = JSON.parse(data);
+      return new Set<string>(Array.isArray(parsed) ? parsed : []);
+    } catch (err) {
+      console.error('Error reading sessions:', err);
       return new Set<string>();
     }
   };
 
   const saveSession = async (token: string) => {
-    const sessions = await getSessions();
-    sessions.add(token);
-    await fs.writeFile(SESSIONS_FILE, JSON.stringify([...sessions]), 'utf-8');
+    try {
+      const sessions = await getSessions();
+      sessions.add(token);
+      await fs.writeFile(SESSIONS_FILE, JSON.stringify([...sessions]), 'utf-8');
+    } catch (err) {
+      console.error('Error saving session:', err);
+    }
   };
 
   const isAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const sessions = await getSessions();
-      if (sessions.has(token)) {
-        return next();
-      } else {
-        console.warn(`Admin access denied: Session not found in store for token: ${token.substring(0, 5)}...`);
-      }
-    } else {
+    if (!authHeader) {
       console.warn(`Admin access denied: No Authorization header for ${req.method} ${req.path}`);
+      return res.status(401).json({ message: 'Authorization header missing' });
     }
-    res.status(401).json({ message: 'Unauthorized' });
+
+    const token = authHeader.replace(/^Bearer /i, '').trim();
+    if (!token) {
+      console.warn(`Admin access denied: Empty token for ${req.method} ${req.path}`);
+      return res.status(401).json({ message: 'Token missing' });
+    }
+
+    const sessions = await getSessions();
+    if (sessions.has(token)) {
+      return next();
+    }
+
+    console.warn(`Admin access denied: Token not found in active sessions for ${req.method} ${req.path}`);
+    res.status(401).json({ message: 'Session expired or invalid - Please log in again' });
   };
 
   app.post('/api/auth/google', async (req, res) => {
@@ -133,21 +146,27 @@ async function startServer() {
 
   app.post('/api/login', async (req, res) => {
     const { password, email } = req.body;
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Prince@1234@';
     
     if (password === ADMIN_PASSWORD && ADMIN_EMAIL_WHITELIST.includes(email)) {
       const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
       await saveSession(token);
+      console.log(`Successfully logged in: ${email}, Session created.`);
       res.json({ success: true, token });
     } else {
-      console.warn(`Login failed for ${email}`);
+      console.warn(`Login failed for ${email}. Password match: ${password === ADMIN_PASSWORD}`);
       res.status(401).json({ success: false, message: 'Invalid password or verification failed' });
     }
   });
 
   app.post('/api/upload', isAdmin, upload.single('image'), (req, res) => {
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    res.json({ url: `/uploads/${req.file.filename}` });
+    if (!req.file) {
+      console.error('Upload failed: No file in request');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const url = `/uploads/${req.file.filename}`;
+    console.log(`File uploaded successfully: ${url}`);
+    res.json({ url });
   });
 
   const setupCRUD = (entity: string, filename: string) => {
@@ -183,6 +202,15 @@ async function startServer() {
       res.json({ success: true });
     });
   };
+
+  // Add error handling for multer and other routes
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Server Error:', err);
+    res.status(err.status || 500).json({ 
+      message: err.message || 'Internal Server Error',
+      error: process.env.NODE_ENV === 'development' ? err : undefined
+    });
+  });
 
   setupCRUD('projects', 'projects.json');
   setupCRUD('blog', 'blog.json');

@@ -67,7 +67,15 @@ export default function Home() {
   }, []);
 
   const handleDownloadResume = () => {
-    navigate('/resume');
+    // Replace with actual resume URL when available
+    const resumeUrl = "/resume-prince-kumar-jha.pdf"; 
+    const link = document.createElement('a');
+    link.href = resumeUrl;
+    link.download = "Prince_Kumar_Jha_Resume.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setShowResumeModal(false);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,8 +88,9 @@ export default function Home() {
       const updatedProfile = { ...(data.profile as Profile), profileImage: res.url };
       await api.profile.update(updatedProfile);
       setData(prev => ({ ...prev, profile: updatedProfile as Profile }));
-    } catch (error) {
-      alert('Upload failed');
+      alert('Profile picture updated successfully!');
+    } catch (error: any) {
+      alert('Upload failed: ' + error.message);
     } finally {
       setUploading(false);
     }

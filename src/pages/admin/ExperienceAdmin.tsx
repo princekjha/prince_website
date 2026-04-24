@@ -72,8 +72,9 @@ export default function ExperienceAdmin() {
         ...editForm,
         images: [...(editForm.images || []), newImage]
       });
-    } catch (error) {
-      alert('Upload failed');
+      alert('Image uploaded successfully!');
+    } catch (error: any) {
+      alert('Upload failed: ' + error.message);
     } finally {
       setUploading(false);
     }
