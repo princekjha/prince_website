@@ -1,0 +1,15 @@
+[
+  {
+    "id": "1",
+    "title": "The Art of Clean Architecture",
+    "slug": "clean-architecture",
+    "excerpt": "Why modular design is more than just a buzzword, and how it impacts long-term maintenance.",
+    "content": "## Modular Design\nModular design is the strategy of breaking a large system into smaller, self-contained pieces.\n\n### Benefits\n- Testability\n- Scalability\n- Sanity",
+    "category": "Engineering",
+    "tags": ["Architecture", "Best Practices"],
+    "readTime": "12 min",
+    "status": "published",
+    "publishDate": "2024-03-01T00:00:00Z",
+    "createdAt": "2024-03-01T00:00:00Z"
+  }
+]

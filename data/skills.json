@@ -1,0 +1,37 @@
+[
+  {
+    "category": "Data Engineering",
+    "skills": [
+      { "name": "Python", "level": "Expert", "subSkills": "Pandas, NumPy, Scripting" },
+      { "name": "SQL", "level": "Expert", "subSkills": "PostgreSQL, Query Optimization" },
+      { "name": "ETL Pipelines", "level": "Intermediate", "subSkills": "Automation, Data Cleaning" },
+      { "name": "MIS Frameworks", "level": "Expert", "subSkills": "Dashboarding, KPIs" }
+    ]
+  },
+  {
+    "category": "AI & Automation",
+    "skills": [
+      { "name": "Generative AI", "level": "Expert", "subSkills": "Prompt Engineering, RAG" },
+      { "name": "NLP", "level": "Intermediate", "subSkills": "Text Processing, Sentiment Analysis" },
+      { "name": "LLM Agents", "level": "Expert", "subSkills": "Tool Use, LangChain" },
+      { "name": "Workflows", "level": "Expert", "subSkills": "n8n, Zapier, API Integration" }
+    ]
+  },
+  {
+    "category": "Business & Leadership",
+    "skills": [
+      { "name": "NSS Leadership", "level": "Expert", "subSkills": "Team Mgmt, Crisis Response" },
+      { "name": "Community Relief", "level": "Expert", "subSkills": "Resource Allocation, Groundwork" },
+      { "name": "Strategy", "level": "Intermediate", "subSkills": "Planning, Risk Assessment" },
+      { "name": "Auditing", "level": "Intermediate", "subSkills": "Compliance, Governance" }
+    ]
+  },
+  {
+    "category": "Creative & Story",
+    "skills": [
+      { "name": "Multilingual Poetry", "level": "Expert", "subSkills": "Hindi, English, Maithili" },
+      { "name": "Storytelling", "level": "Expert", "subSkills": "Narrative Design, Expression" },
+      { "name": "Public Speaking", "level": "Intermediate", "subSkills": "Articulation, Presentation" }
+    ]
+  }
+]
