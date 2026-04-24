@@ -1,0 +1,12 @@
+name = "portfolio-worker"
+main = "worker.ts"
+compatibility_date = "2024-04-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-db"
+database_id = "your-database-id-here"
+
+[vars]
+JWT_SECRET = "change-me-in-dashboard"
+ADMIN_PASSWORD_LAYER2 = "Prince@1234@"

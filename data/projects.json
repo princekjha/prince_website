@@ -1,0 +1,28 @@
+[
+  {
+    "id": "1",
+    "title": "Quantum Pulse Dashboard",
+    "slug": "quantum-pulse",
+    "description": "A high-performance financial analytics dashboard with real-time data streaming.",
+    "fullDescription": "## Overview\nThis project was designed for high-frequency traders who need split-second insights.\n\n### Key Features\n- Real-time WebSockets\n- D3.js powered visualizations\n- Ultra-low latency rendering",
+    "featuredImage": "https://images.unsplash.com/photo-1551288049-bbdac8626ad1?auto=format&fit=crop&q=80&w=600",
+    "techStack": ["React", "D3.js", "Node.js"],
+    "projectType": "Full Project",
+    "featured": true,
+    "status": "published",
+    "createdAt": "2024-01-20T10:00:00Z"
+  },
+  {
+    "id": "2",
+    "title": "Eco-Trace Mobile",
+    "slug": "eco-trace",
+    "description": "A cross-platform mobile application for tracking personal carbon footprint.",
+    "fullDescription": "## The Mission\nHelping individuals understand their environmental impact through automated activity tracking.\n\n### Impact\nOver 10,000 active users reducing their footprint by an average of 15%.",
+    "featuredImage": "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600",
+    "techStack": ["React Native", "Firebase", "TypeScript"],
+    "projectType": "Case Study",
+    "featured": true,
+    "status": "published",
+    "createdAt": "2024-02-15T10:00:00Z"
+  }
+]
