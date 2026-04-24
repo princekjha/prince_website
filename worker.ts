@@ -136,7 +136,14 @@ app.use('*', async (c, next) => {
 
   const assetFetcher = c.env.ASSETS?.fetch;
   if (typeof assetFetcher === 'function') {
-    return assetFetcher(c.req.raw);
+    const assetResponse = await assetFetcher(c.req.raw);
+    if (assetResponse.status !== 404) {
+      return assetResponse;
+    }
+
+    const spaUrl = new URL(c.req.url);
+    spaUrl.pathname = '/index.html';
+    return assetFetcher(new Request(spaUrl.toString(), c.req.raw));
   }
 
   return next();
