@@ -118,7 +118,7 @@ type Bindings = {
   DB: D1Database;
   JWT_SECRET: string;
   ADMIN_PASSWORD_LAYER2: string;
-  ASSETS: { fetch: (request: Request) => Promise<Response> };
+  ASSETS?: { fetch: (request: Request) => Promise<Response> };
 };
 
 /* ---------------- APP INIT ---------------- */
@@ -133,7 +133,13 @@ app.use('*', async (c, next) => {
   if (c.req.path.startsWith('/api')) {
     return next();
   }
-  return c.env.ASSETS.fetch(c.req.raw);
+
+  const assetFetcher = c.env.ASSETS?.fetch;
+  if (typeof assetFetcher === 'function') {
+    return assetFetcher(c.req.raw);
+  }
+
+  return next();
 });
 
 const makeId = () => crypto.randomUUID();
