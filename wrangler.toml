@@ -15,4 +15,3 @@ ADMIN_PASSWORD_LAYER2 = "Prince@1234@"
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
-run_worker_first = true
