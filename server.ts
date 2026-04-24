@@ -23,6 +23,8 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 async function ensureDirs() {
   try { await fs.access(DATA_DIR); } catch { await fs.mkdir(DATA_DIR); }
   try { await fs.access(UPLOADS_DIR); } catch { await fs.mkdir(UPLOADS_DIR); }
+  const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+  try { await fs.access(SESSIONS_FILE); } catch { await fs.writeFile(SESSIONS_FILE, '[]', 'utf-8'); }
 }
 
 async function readData(filename: string) {
@@ -75,13 +77,32 @@ async function startServer() {
   });
   const upload = multer({ storage });
 
-  // Admin Session Store (In-memory for now, can be expanded)
-  const activeSessions = new Set<string>();
+  // Admin Session Store
+  const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+  
+  const getSessions = async () => {
+    try {
+      const data = await fs.readFile(SESSIONS_FILE, 'utf-8');
+      return new Set<string>(JSON.parse(data));
+    } catch {
+      return new Set<string>();
+    }
+  };
 
-  const isAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const saveSession = async (token: string) => {
+    const sessions = await getSessions();
+    sessions.add(token);
+    await fs.writeFile(SESSIONS_FILE, JSON.stringify([...sessions]), 'utf-8');
+  };
+
+  const isAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
-    if (authHeader && activeSessions.has(authHeader.replace('Bearer ', ''))) {
-      return next();
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const sessions = await getSessions();
+      if (sessions.has(token)) {
+        return next();
+      }
     }
     res.status(401).json({ message: 'Unauthorized' });
   };
@@ -95,7 +116,9 @@ async function startServer() {
       });
       const payload = ticket.getPayload();
       if (payload && ADMIN_EMAIL_WHITELIST.includes(payload.email || '')) {
-        res.json({ success: true, email: payload.email });
+        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        await saveSession(token);
+        res.json({ success: true, email: payload.email, token });
       } else {
         res.status(403).json({ message: 'Email not whitelisted' });
       }
@@ -104,13 +127,13 @@ async function startServer() {
     }
   });
 
-  app.post('/api/login', (req, res) => {
+  app.post('/api/login', async (req, res) => {
     const { password, email } = req.body;
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
     
     if ((password === ADMIN_PASSWORD || email === "pjha3913@gmail.com") && ADMIN_EMAIL_WHITELIST.includes(email)) {
       const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      activeSessions.add(token);
+      await saveSession(token);
       res.json({ success: true, token });
     } else {
       res.status(401).json({ success: false, message: 'Invalid password or verification failed' });
@@ -230,6 +253,21 @@ async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
     app.use(vite.middlewares);
+    
+    // Explicit SPA fallback for development to avoid 404s on browser refresh
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith('/api') || url.includes('.')) {
+        return next();
+      }
+      try {
+        let template = await fs.readFile(path.resolve(__dirname, 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
