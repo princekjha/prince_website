@@ -97,3 +97,20 @@ CREATE TABLE profile (
 
 -- Seed Initial Profile
 INSERT INTO profile (id, name, role, bio) VALUES ('main', 'Prince Kumar Jha', 'Data Engineer & AI Specialist', 'Architecting the bridge between structured data and human-centric AI solutions.');
+
+DROP TABLE IF EXISTS sessions;
+CREATE TABLE sessions (
+  token TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  expiresAt INTEGER NOT NULL
+);
+
+DROP TABLE IF EXISTS messages;
+CREATE TABLE messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT,
+  message TEXT NOT NULL,
+  createdAt TEXT NOT NULL
+);
