@@ -20,7 +20,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    // throw new Error(`API Error: ${response.statusText}`);
+      let details = response.statusText || '';
+      try {
+       const payload = await response.json() as { error?: string; message?: string };
+       details = payload.error || payload.message || details;
+     } catch {
+       const text = await response.text();
+       if (text) details = text;
+     }
+     throw new Error(`API Error (${response.status}): ${details || 'Unknown server error'}`);
   }
   return response.json();
 }
