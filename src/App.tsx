@@ -6,15 +6,26 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import KnowledgeMap from './components/layout/KnowledgeMap';
 
-// ... existing pages ...
-import AdminDashboard from './pages/admin/AdminDashboard';
-import Overview from './pages/admin/Overview';
-// import ProjectsAdmin from './pages/admin/ProjectsAdmin';
-import BlogAdmin from './pages/admin/BlogAdmin';
-import CreativeAdmin from './pages/admin/CreativeAdmin';
-import LearningAdmin from './pages/admin/LearningAdmin';
-import ExperienceAdmin from './pages/admin/ExperienceAdmin';
-import SkillsAdmin from './pages/admin/SkillsAdmin';
+// // ... existing pages ...
+// import AdminDashboard from './pages/admin/AdminDashboard';
+// import Overview from './pages/admin/Overview';
+// // import ProjectsAdmin from './pages/admin/ProjectsAdmin';
+// import BlogAdmin from './pages/admin/BlogAdmin';
+// import CreativeAdmin from './pages/admin/CreativeAdmin';
+// import LearningAdmin from './pages/admin/LearningAdmin';
+// import ExperienceAdmin from './pages/admin/ExperienceAdmin';
+// import SkillsAdmin from './pages/admin/SkillsAdmin';
+
+
+// Admin Pages
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const Overview = lazy(() => import('./pages/admin/Overview'));
+const ProjectsAdmin = lazy(() => import('./pages/admin/ProjectsAdmin'));
+const BlogAdmin = lazy(() => import('./pages/admin/BlogAdmin'));
+const CreativeAdmin = lazy(() => import('./pages/admin/CreativeAdmin'));
+const LearningAdmin = lazy(() => import('./pages/admin/LearningAdmin'));
+const ExperienceAdmin = lazy(() => import('./pages/admin/ExperienceAdmin'));
+const SkillsAdmin = lazy(() => import('./pages/admin/SkillsAdmin'));
 
 // ... existing pages ...
 const Home = lazy(() => import('./pages/Home'));
