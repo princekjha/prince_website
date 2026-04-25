@@ -335,6 +335,12 @@ async function readData(filename: string) {
 
 async function writeData(filename: string, data: any) {
   const filePath = path.join(DATA_DIR, filename);
+  const dirPath = path.dirname(filePath);
+  try {
+    await fs.access(dirPath);
+  } catch {
+    await fs.mkdir(dirPath, { recursive: true });
+  }
   const tempPath = `${filePath}.tmp`;
   const content = JSON.stringify(data, null, 2);
   await fs.writeFile(tempPath, content, 'utf-8');
