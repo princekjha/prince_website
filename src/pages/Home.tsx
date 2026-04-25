@@ -47,28 +47,28 @@ export default function Home() {
           .filter(p => p.status === 'published')
           .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-        // Group skills by category
-        const groupedSkills = (skills || []).reduce((acc: any[], skill: any) => {
-          const catName = skill.category || 'General';
-          const existing = acc.find(c => c.category === catName);
-          if (existing) {
-            existing.skills.push(skill);
-          } else {
-            acc.push({ category: catName, skills: [skill] });
-          }
-          return acc;
-        }, []);
+        // // Group skills by category
+        // const groupedSkills = (skills || []).reduce((acc: any[], skill: any) => {
+        //   const catName = skill.category || 'General';
+        //   const existing = acc.find(c => c.category === catName);
+        //   if (existing) {
+        //     existing.skills.push(skill);
+        //   } else {
+        //     acc.push({ category: catName, skills: [skill] });
+        //   }
+        //   return acc;
+        // }, []);
 
         setData({
           lesson: lessons[0],
           experience: experiences[0],
           creative: sortedCreatives[0],
           profile: profile,
-          skills: groupedSkills,
+          skills: skills || [],
         });
 
-        if (groupedSkills.length > 0) {
-          setActiveCategory(groupedSkills[0].category);
+        if (skills && skills.length > 0) {
+          setActiveCategory(skills[0].category);
         }
       } catch (error) {
         console.error('Failed to fetch home data:', error);
