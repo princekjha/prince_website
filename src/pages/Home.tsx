@@ -802,7 +802,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Projects Section */}
+      {/* Featured Projects Section
       <section className="py-24 px-6 md:px-12 bg-bg-primary overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
@@ -867,7 +867,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Global Mission - Fixed Parallax Background */}
       <section 
