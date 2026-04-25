@@ -829,8 +829,8 @@ export default function About() {
               </div>
             </div>
           </div>
-          <div className="relative">
-             <div className="aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border-2 border-border-theme group">
+          <div className="relative flex justify-center lg:justify-end">
+             <div className="w-full max-w-[320px] aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border-2 border-border-theme group">
                 <img 
                   src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=800" 
                   alt="Future Exploration" 
