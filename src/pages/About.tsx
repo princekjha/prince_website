@@ -437,13 +437,13 @@
 //   );
 // }
 
-
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Github, Linkedin, ExternalLink, ChevronRight, X, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '@/src/lib/api';
 import { Experience } from '@/src/types';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // ... academicData ...
 const academicData = {
@@ -559,8 +559,7 @@ export default function About() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
           <div className="md:col-span-5 rounded-2xl overflow-hidden shadow-lg border-4 border-bg-secondary bg-bg-secondary">
             <img 
-              // src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800"
-              src="/images/about/My_latest_pic.jpeg"
+              src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800" 
               alt="Prince Kumar Jha" 
               className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
             />
@@ -759,39 +758,40 @@ export default function About() {
                   {/* Impact Stories */}
                   <div className="prose prose-orange prose-sm max-w-none text-text-secondary font-story italic leading-relaxed px-4 border-l-2 border-brand/20 hover:border-brand transition-all">
                     {currentExp.description ? (
-                      <Markdown>{currentExp.description}</Markdown>
+                      <Markdown remarkPlugins={[remarkGfm]}>{currentExp.description}</Markdown>
                     ) : (
                       <p className="italic text-text-secondary/40 font-story">Detailed impact stories for this role are being curated.</p>
                     )}
                   </div>
 
                   {/* Visual Content */}
-                  {currentExp?.image && (
+                  {currentExp?.images && currentExp.images.length > 0 && (
                     <div className="pt-8 border-t border-border-theme/30">
                       <div className="flex items-center gap-2 mb-6">
                         <ImageIcon className="text-brand w-4 h-4" />
-                        <h5 className="text-sm font-bold uppercase tracking-widest text-text-primary">Journey Snapshot</h5>
+                        <h5 className="text-sm font-bold uppercase tracking-widest text-text-primary">Journey Milestones</h5>
                       </div>
-                      <div className="max-w-2xl">
-                        <motion.div 
-                          layout
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="relative group cursor-pointer aspect-video rounded-3xl overflow-hidden border-2 border-bg-primary shadow-lg"
-                          onClick={() => setLightbox(currentExp.image)}
-                        >
-                          <img 
-                            src={currentExp.image} 
-                            alt={`${currentExp.organization} Milestone`} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <div className="flex flex-col items-center gap-2">
-                               <Maximize2 className="text-white w-8 h-8" />
-                               <span className="text-white text-[10px] font-bold uppercase tracking-widest">Enlarge Story</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {currentExp.images.map((img, idx) => (
+                          <motion.div 
+                            key={idx}
+                            layout
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="relative group cursor-pointer aspect-video sm:aspect-square rounded-2xl overflow-hidden border-2 border-bg-primary shadow-md hover:shadow-xl transition-all"
+                            onClick={() => setLightbox(img)}
+                          >
+                            <img 
+                              src={img} 
+                              alt={`${currentExp.organization} Milestone ${idx + 1}`} 
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                               <Maximize2 className="text-white w-6 h-6" />
                             </div>
-                          </div>
-                        </motion.div>
+                          </motion.div>
+                        ))}
                       </div>
                     </div>
                   )}

@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { Bold, Italic, List, Link as LinkIcon, Eye, Code } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useState } from 'react';
 import { cn } from '@/src/lib/utils';
 
@@ -84,7 +85,7 @@ export default function RichTextEditor({ value, onChange, label, placeholder, id
       ) : (
         <div className="w-full p-8 bg-bg-secondary border border-border-theme rounded-2xl min-h-[300px] prose prose-slate max-w-none prose-headings:font-serif prose-p:font-story prose-p:italic prose-p:text-lg">
           {value ? (
-            <ReactMarkdown>{value}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
           ) : (
             <div className="h-full flex items-center justify-center text-text-secondary/20 italic">
               Nothing to preview yet.

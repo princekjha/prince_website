@@ -242,7 +242,6 @@
 //   );
 // }
 
-
 import { useState, useEffect } from 'react';
 import { api } from '@/src/lib/api';
 import { Project } from '@/src/types';
@@ -279,7 +278,8 @@ export default function ProjectsAdmin() {
       projectType: 'Full Project',
       featured: false,
       status: 'draft',
-      featuredImage: ''
+      featuredImage: '',
+      images: []
     });
     setIsEditing(true);
   };
@@ -347,14 +347,51 @@ export default function ProjectsAdmin() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Image Path (e.g. /images/projects/photo.png)</label>
-            <input 
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-[#E67E22] focus:outline-none"
-              value={currentProject?.featuredImage}
-              onChange={e => setCurrentProject({ ...currentProject, featuredImage: e.target.value })}
-              placeholder="/images/projects/my-project.png"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Featured Image Path (Main)</label>
+              <input 
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-[#E67E22] focus:outline-none"
+                value={currentProject?.featuredImage}
+                onChange={e => setCurrentProject({ ...currentProject, featuredImage: e.target.value })}
+                placeholder="/images/projects/photo.png"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Gallery Images (Paths)</label>
+              <div className="space-y-2">
+                {(currentProject?.images || []).map((img, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input 
+                      className="flex-1 px-4 py-2 rounded-lg bg-gray-50 border border-transparent focus:bg-white focus:border-[#E67E22] focus:outline-none"
+                      value={img}
+                      onChange={e => {
+                        const newImages = [...(currentProject?.images || [])];
+                        newImages[idx] = e.target.value;
+                        setCurrentProject({ ...currentProject, images: newImages });
+                      }}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const newImages = (currentProject?.images || []).filter((_, i) => i !== idx);
+                        setCurrentProject({ ...currentProject, images: newImages });
+                      }}
+                      className="p-2 text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                <button 
+                  type="button"
+                  onClick={() => setCurrentProject({ ...currentProject, images: [...(currentProject?.images || []), ''] })}
+                  className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:text-[#E67E22] transition-all flex items-center justify-center gap-2 text-xs font-bold"
+                >
+                  <Plus className="w-3 h-3" /> Add Gallery Image
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -486,3 +523,4 @@ export default function ProjectsAdmin() {
     </div>
   );
 }
+

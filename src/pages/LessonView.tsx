@@ -4,6 +4,7 @@ import { api } from '@/src/lib/api';
 import { LearningTopic, Lesson } from '@/src/types';
 import { ArrowLeft, Menu, X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
@@ -155,7 +156,7 @@ export default function LessonView() {
               prose-img:rounded-3xl prose-img:shadow-xl
               mb-20"
             >
-              <ReactMarkdown>{currentLesson.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentLesson.content}</ReactMarkdown>
             </div>
 
             {/* Navigation Controls */}

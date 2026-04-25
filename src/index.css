@@ -48,6 +48,14 @@
     color: var(--text-primary);
   }
 
+  strong, b {
+    font-weight: 700 !important;
+  }
+
+  em, i {
+    font-style: italic !important;
+  }
+
   p {
     color: var(--text-secondary);
   }

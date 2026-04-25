@@ -89,6 +89,7 @@ export interface Project {
   description: string;
   fullDescription: string;
   featuredImage: string;
+  images: string[];
   techStack: string[];
   projectType: 'Case Study' | 'Experiment' | 'Full Project';
   demoUrl?: string;
@@ -154,7 +155,7 @@ export interface Experience {
   organization: string;
   role: string;
   tenure: string;
-  image: string;
+  images: string[];
   description: string;
   status: 'published' | 'draft';
   createdAt: string;

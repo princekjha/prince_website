@@ -259,7 +259,6 @@
 //   );
 // }
 
-
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/src/lib/api';
 import { Experience } from '@/src/types';
@@ -287,7 +286,7 @@ export default function ExperienceAdmin() {
       organization: 'New Organization',
       role: 'Role Name',
       tenure: 'Start - End',
-      image: '',
+      images: [],
       description: '',
       status: 'published'
     };
@@ -370,13 +369,39 @@ export default function ExperienceAdmin() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold uppercase text-text-secondary/60 mb-2 block">Image Path</label>
-                    <input 
-                      className="w-full p-3 border border-border-theme rounded-xl bg-bg-primary focus:bg-bg-secondary focus:ring-2 focus:ring-brand transition-all text-text-primary"
-                      value={editForm.image}
-                      onChange={e => setEditForm({ ...editForm, image: e.target.value })}
-                      placeholder="/images/experience/logo.png"
-                    />
+                    <label className="text-xs font-bold uppercase text-text-secondary/60 mb-2 block">Image Gallery (Paths)</label>
+                    <div className="space-y-2">
+                      {(editForm.images || []).map((img, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <input 
+                            className="flex-1 p-3 border border-border-theme rounded-xl bg-bg-primary focus:bg-bg-secondary transition-all text-text-primary"
+                            value={img}
+                            onChange={e => {
+                              const newImages = [...(editForm.images || [])];
+                              newImages[idx] = e.target.value;
+                              setEditForm({ ...editForm, images: newImages });
+                            }}
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const newImages = (editForm.images || []).filter((_, i) => i !== idx);
+                              setEditForm({ ...editForm, images: newImages });
+                            }}
+                            className="p-3 text-red-500 hover:bg-red-500/10 rounded-xl"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        type="button"
+                        onClick={() => setEditForm({ ...editForm, images: [...(editForm.images || []), ''] })}
+                        className="w-full p-3 border-2 border-dashed border-border-theme rounded-xl text-text-secondary/60 hover:text-brand hover:border-brand transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" /> Add Image Path
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -406,13 +431,21 @@ export default function ExperienceAdmin() {
               <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                 <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-4">
-                      {exp.image ? (
-                        <img src={exp.image} className="w-12 h-12 rounded-2xl object-cover border border-border-theme" alt={exp.organization} />
-                      ) : (
-                        <div className="w-12 h-12 rounded-2xl bg-bg-primary border border-border-theme flex items-center justify-center">
-                          <ImageIcon className="text-brand w-6 h-6" />
-                        </div>
-                      )}
+                      <div className="flex -space-x-4">
+                        {(exp.images || []).slice(0, 3).map((img, i) => (
+                          <img key={i} src={img} className="w-12 h-12 rounded-2xl object-cover border-2 border-bg-secondary shadow-sm" alt="" />
+                        ))}
+                        {(!exp.images || exp.images.length === 0) && (
+                          <div className="w-12 h-12 rounded-2xl bg-bg-primary border border-border-theme flex items-center justify-center">
+                            <ImageIcon className="text-brand w-6 h-6" />
+                          </div>
+                        )}
+                        {(exp.images?.length || 0) > 3 && (
+                          <div className="w-12 h-12 rounded-2xl bg-bg-primary border border-border-theme flex items-center justify-center text-[10px] font-bold text-text-secondary">
+                            +{exp.images!.length - 3}
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <h3 className="text-2xl font-serif font-bold text-text-primary">{exp.organization}</h3>
                         <div className="flex items-center gap-3 mt-1">
@@ -427,7 +460,7 @@ export default function ExperienceAdmin() {
                       {exp.description ? 'Story Written' : 'Draft'}
                     </span>
                     <span className="text-[10px] bg-bg-primary px-3 py-1.5 rounded-full text-text-secondary font-bold border border-border-theme tracking-tight">
-                      {exp.image ? 'Image Set' : 'No Image'}
+                      {exp.images?.length || 0} Photos Linked
                     </span>
                   </div>
                 </div>
@@ -462,3 +495,4 @@ export default function ExperienceAdmin() {
     </div>
   );
 }
+

@@ -416,13 +416,12 @@
 //   );
 // }
 
-
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, BookOpen, Briefcase, User, PenTool, Sparkles, Database, Code2, Heart, Upload, Camera, ChevronRight, Edit, Download, X, History } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/src/lib/api';
-import { Lesson, Experience, CreativePiece } from '@/src/types';
+import { Lesson, Experience, CreativePiece, Project } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 
 interface Profile {
@@ -439,6 +438,7 @@ export default function Home() {
     creative?: CreativePiece;
     profile?: Profile;
     skills?: any[];
+    projects?: Project[];
   }>({});
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -453,12 +453,13 @@ export default function Home() {
     
     async function fetchData() {
       try {
-        const [lessons, experiences, creatives, profile, skills] = await Promise.all([
+        const [lessons, experiences, creatives, profile, skills, projects] = await Promise.all([
           api.lessons.list(),
           api.experience.list(),
           api.creative.list(),
           api.profile.get(),
           api.skills.list(),
+          api.projects.list(),
         ]);
         
         const sortedCreatives = creatives
@@ -471,6 +472,7 @@ export default function Home() {
           creative: sortedCreatives[0],
           profile: profile,
           skills: skills,
+          projects: projects.filter(p => p.featured && p.status === 'published').slice(0, 3)
         });
 
         if (skills.length > 0) {
@@ -518,7 +520,7 @@ export default function Home() {
   if (loading) return <div className="min-h-screen flex items-center justify-center font-story italic">Loading your world...</div>;
 
   return (
-    <div className="bg-bg-primary min-h-screen font-sans overflow-hidden transition-colors duration-300">
+    <div className="bg-bg-primary min-h-screen font-sans overflow-x-hidden transition-colors duration-300">
       {/* Resume Modal */}
       <AnimatePresence>
         {showResumeModal && (
@@ -590,7 +592,7 @@ export default function Home() {
                 <Sparkles className="w-4 h-4 text-brand" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand">Personal Portfolio</span>
               </div>
-              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-black leading-[1.1] text-text-primary tracking-tight">
+              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-black leading-[1.1] text-text-primary tracking-tight break-words">
                 Hi, I'm <span className="text-brand">{data.profile?.name || 'Prince Kumar Jha'}</span>
               </h1>
               <p className="mt-8 text-lg text-text-secondary font-story italic leading-relaxed max-w-2xl">
@@ -727,7 +729,7 @@ export default function Home() {
                   <p className="text-sm font-bold uppercase tracking-widest mb-4 text-white">Change Profile Picture</p>
                   <button 
                     onClick={() => {
-                      const path = prompt("Enter local image path (e.g. /images/about/profile.png):", data.profile?.profileImage || "/images/about/default.png");
+                      const path = prompt("Enter local image path (e.g. /images/about/profile.png):", data.profile?.profileImage);
                       if (path) handleImagePathUpdate(path);
                     }}
                     disabled={uploading}
@@ -800,6 +802,73 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Featured Projects Section */}
+      <section className="py-24 px-6 md:px-12 bg-bg-primary overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-brand" />
+                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand">Case Studies</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-text-primary">Featured Work.</h2>
+            </div>
+            <Link to="/contact" className="text-text-secondary/40 text-[10px] font-bold uppercase tracking-widest hover:text-brand transition-colors">
+              View All Experiments
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {(data.projects || []).map((project, idx) => (
+              <motion.div 
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="group relative flex flex-col h-full bg-bg-secondary rounded-[2rem] border border-border-theme overflow-hidden hover:shadow-2xl transition-all"
+              >
+                <div className="aspect-[16/10] overflow-hidden">
+                   {project.featuredImage ? (
+                      <img 
+                        src={project.featuredImage} 
+                        alt={project.title} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                   ) : (
+                      <div className="w-full h-full bg-bg-primary flex items-center justify-center">
+                         <Code2 className="w-12 h-12 text-brand/20" />
+                      </div>
+                   )}
+                </div>
+                <div className="p-8 flex-1 flex flex-col">
+                  <div className="flex gap-2 mb-4">
+                     {project.images && project.images.length > 0 && (
+                       <span className="text-[10px] bg-brand text-white px-2 py-1 rounded font-bold uppercase tracking-widest flex items-center gap-1">
+                         <Camera className="w-3 h-3" /> {project.images.length}
+                       </span>
+                     )}
+                     <span className="text-[10px] bg-bg-primary text-text-secondary px-2 py-1 rounded font-bold uppercase tracking-widest border border-border-theme">
+                       {project.projectType}
+                     </span>
+                  </div>
+                  <h3 className="text-xl font-serif font-bold text-text-primary mb-3">{project.title}</h3>
+                  <p className="text-sm text-text-secondary mb-6 line-clamp-2 italic font-story">
+                    {project.description}
+                  </p>
+                  <div className="mt-auto pt-6 border-t border-border-theme/30 flex items-center justify-between">
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary/40">{(project.techStack || []).slice(0, 3).join(' • ')}</span>
+                     <Link to="/contact" className="w-10 h-10 rounded-full border border-border-theme flex items-center justify-center hover:bg-brand hover:border-brand hover:text-white transition-all">
+                        <ArrowRight className="w-4 h-4" />
+                     </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Global Mission - Fixed Parallax Background */}
       <section 
         className="relative py-48 px-6 md:px-12 bg-cover bg-center bg-no-repeat bg-fixed"
@@ -830,3 +899,5 @@ export default function Home() {
     </div>
   );
 }
+
+
