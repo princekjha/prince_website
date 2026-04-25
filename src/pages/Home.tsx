@@ -727,7 +727,7 @@ export default function Home() {
                   <p className="text-sm font-bold uppercase tracking-widest mb-4 text-white">Change Profile Picture</p>
                   <button 
                     onClick={() => {
-                      const path = prompt("Enter local image path (e.g. /images/about/profile.png):", data.profile?.profileImage);
+                      const path = prompt("Enter local image path (e.g. /images/about/profile.png):", data.profile?.profileImage || "/images/about/default.png");
                       if (path) handleImagePathUpdate(path);
                     }}
                     disabled={uploading}
