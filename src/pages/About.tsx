@@ -559,7 +559,8 @@ export default function About() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
           <div className="md:col-span-5 rounded-2xl overflow-hidden shadow-lg border-4 border-bg-secondary bg-bg-secondary">
             <img 
-              src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800" 
+              // src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800" 
+              src="/images/about/My_latest_pic.jpeg"
               alt="Prince Kumar Jha" 
               className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
             />
