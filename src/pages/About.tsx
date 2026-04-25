@@ -592,7 +592,7 @@ export default function About() {
               I realized then that efficient systems are the backbone of community impact. That realization pushed me to look beyond accounting spreadsheets and into the world of data science.
             </p>
           </div>
-          <div className="rounded-2xl overflow-hidden shadow-md border-2 border-border-theme aspect-[4/3] bg-bg-secondary">
+          <div className="rounded-2xl overflow-hidden shadow-md border-2 border-border-theme aspect-[12/5] bg-bg-secondary group">
             <img 
               // src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600" 
               src="/images/about/LNMU.jpg"
