@@ -594,7 +594,8 @@ export default function About() {
           </div>
           <div className="rounded-2xl overflow-hidden shadow-md border-2 border-border-theme aspect-[4/3] bg-bg-secondary">
             <img 
-              src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600" 
+              // src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=600" 
+              src="/images/about/LNMU.jpg"
               alt="The LNMU Spirit" 
               className="w-full h-full object-cover opacity-80" 
             />
@@ -671,7 +672,8 @@ export default function About() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center flex-row-reverse mb-16">
           <div className="order-2 md:order-1 rounded-2xl overflow-hidden shadow-lg border-2 border-border-theme aspect-video">
             <img 
-              src="https://images.unsplash.com/photo-1551288049-bbdac8626ad1?auto=format&fit=crop&q=80&w=800" 
+              // src="https://images.unsplash.com/photo-1551288049-bbdac8626ad1?auto=format&fit=crop&q=80&w=800"
+              src="/images/about/Almabetter.png" 
               alt="Data Visualization" 
               className="w-full h-full object-cover" 
             />
