@@ -39,7 +39,7 @@ export default function Login() {
       if (res.success) {
         localStorage.setItem('admin_token', res.token);
         navigate('/admin');
-        window.location.reload();
+        // window.location.reload();
       }
     } catch (err: any) {
       setError('Invalid password. Please try again.');

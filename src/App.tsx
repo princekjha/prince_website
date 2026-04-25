@@ -7,6 +7,16 @@ import Footer from './components/layout/Footer';
 import KnowledgeMap from './components/layout/KnowledgeMap';
 
 // ... existing pages ...
+import AdminDashboard from './pages/admin/AdminDashboard';
+import Overview from './pages/admin/Overview';
+// import ProjectsAdmin from './pages/admin/ProjectsAdmin';
+import BlogAdmin from './pages/admin/BlogAdmin';
+import CreativeAdmin from './pages/admin/CreativeAdmin';
+import LearningAdmin from './pages/admin/LearningAdmin';
+import ExperienceAdmin from './pages/admin/ExperienceAdmin';
+import SkillsAdmin from './pages/admin/SkillsAdmin';
+
+// ... existing pages ...
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
 const Verses = lazy(() => import('./pages/Verses'));
@@ -15,7 +25,6 @@ const TopicDetail = lazy(() => import('./pages/LearningTopic'));
 const LessonView = lazy(() => import('./pages/LessonView'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/Login'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const Resume = lazy(() => import('./pages/Resume'));
 
 // Private Route Component
@@ -50,11 +59,19 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 
                 {/* Admin Routes */}
-                <Route path="/admin/*" element={
+                <Route path="/admin" element={
                   <PrivateRoute>
                     <AdminDashboard />
                   </PrivateRoute>
-                } />
+                }>
+                  <Route index element={<Overview />} />
+                  <Route path="projects" element={<ProjectsAdmin />} />
+                  <Route path="blog" element={<BlogAdmin />} />
+                  <Route path="creative" element={<CreativeAdmin />} />
+                  <Route path="learning" element={<LearningAdmin />} />
+                  <Route path="experience" element={<ExperienceAdmin />} />
+                  <Route path="skills" element={<SkillsAdmin />} />
+                </Route>
               </Routes>
             </Suspense>
           </main>
