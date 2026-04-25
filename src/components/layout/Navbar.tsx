@@ -125,7 +125,6 @@
 //   );
 // }
 
-
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, LogIn, LayoutDashboard, LogOut, Home as HomeIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -205,7 +204,7 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="md:hidden flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
             <button
               onClick={() => setIsOpen(!isOpen)}

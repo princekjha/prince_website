@@ -184,54 +184,55 @@ export default function Home() {
                 <Sparkles className="w-4 h-4 text-brand" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand">Personal Portfolio</span>
               </div>
-              <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-black leading-[1.1] text-text-primary tracking-tight">
+              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-black leading-[1.1] text-text-primary tracking-tight">
                 Hi, I'm <span className="text-brand whitespace-nowrap">{data.profile?.name || 'Prince Kumar Jha'}</span>
               </h1>
+              
+              {/* Profile Image (Mobile/Tablet Only) - Moved higher */}
+              <div className="lg:hidden relative group w-full max-w-xs mx-auto my-10">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1 }}
+                  className="relative aspect-square rounded-[2rem] overflow-hidden shadow-xl border-4 border-white transform rotate-1"
+                >
+                  <img 
+                    src={data.profile?.profileImage} 
+                    alt="Profile" 
+                    className={cn("w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700", uploading && "opacity-50 blur-sm")}
+                  />
+                  
+                  {isAdmin && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center text-white">
+                      <button 
+                        onClick={() => {
+                          const path = prompt("Enter local image path:", data.profile?.profileImage);
+                          if (path) handleImagePathUpdate(path);
+                        }}
+                        className="bg-white text-black px-4 py-1.5 rounded-full font-bold text-[10px] uppercase shadow-lg"
+                      >
+                        Update
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.button
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 }}
+                  onClick={() => setShowResumeModal(true)}
+                  className="absolute -bottom-4 -right-4 bg-white text-[#1A1A2E] p-4 rounded-2xl shadow-xl border border-border-theme z-20 flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4 text-brand" />
+                  <span className="text-[10px] font-serif font-bold">Resume</span>
+                </motion.button>
+              </div>
+
               <p className="mt-8 text-lg text-text-secondary font-story italic leading-relaxed max-w-2xl">
                 {data.profile?.bio}
               </p>
             </motion.div>
-
-            {/* Profile Image (Mobile/Tablet Only) - Positioned between text and skills */}
-            <div className="lg:hidden relative group w-full max-w-xs mx-auto">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1 }}
-                className="relative aspect-square rounded-[2rem] overflow-hidden shadow-xl border-4 border-white transform rotate-1"
-              >
-                <img 
-                  src={data.profile?.profileImage} 
-                  alt="Profile" 
-                  className={cn("w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700", uploading && "opacity-50 blur-sm")}
-                />
-                
-                {isAdmin && (
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center text-white">
-                    <button 
-                      onClick={() => {
-                        const path = prompt("Enter local image path:", data.profile?.profileImage);
-                        if (path) handleImagePathUpdate(path);
-                      }}
-                      className="bg-white text-black px-4 py-1.5 rounded-full font-bold text-[10px] uppercase shadow-lg"
-                    >
-                      Update
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-
-              <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 }}
-                onClick={() => setShowResumeModal(true)}
-                className="absolute -bottom-4 -right-4 bg-white text-[#1A1A2E] p-4 rounded-2xl shadow-xl border border-border-theme z-20 flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span className="text-[10px] font-serif font-bold">Resume</span>
-              </motion.button>
-            </div>
 
             {/* Specialized Skills */}
             <motion.div 
@@ -280,10 +281,10 @@ export default function Home() {
                   <div className="overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary/70 border-b border-border-theme">
-                          <th className="pb-4 font-bold">Skill</th>
-                          <th className="pb-4 font-bold">Proficiency</th>
-                          <th className="pb-4 font-bold text-right pr-4">Sub-skills / Concepts</th>
+                        <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-primary border-b border-border-theme">
+                          <th className="pb-4 font-black">Skill</th>
+                          <th className="pb-4 font-black">Proficiency</th>
+                          <th className="pb-4 font-black text-right pr-4">Sub-skills / Concepts</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border-theme/50">
@@ -300,7 +301,7 @@ export default function Home() {
                                  {s.level}
                                </span>
                             </td>
-                            <td className="py-4 text-[11px] text-text-secondary/80 font-story italic text-right pr-4">
+                            <td className="py-4 text-[11px] text-text-primary/60 font-story italic text-right pr-4">
                               {s.subSkills}
                             </td>
                           </tr>

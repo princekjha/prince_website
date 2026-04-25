@@ -25,7 +25,6 @@ const TopicDetail = lazy(() => import('./pages/LearningTopic'));
 const LessonView = lazy(() => import('./pages/LessonView'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/Login'));
-const Resume = lazy(() => import('./pages/Resume'));
 
 // Private Route Component
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -50,7 +49,6 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/resume" element={<Resume />} />
                 <Route path="/learning" element={<Learning />} />
                 <Route path="/learning/:topicSlug" element={<TopicDetail />} />
                 <Route path="/learning/:topicSlug/:lessonSlug" element={<LessonView />} />
