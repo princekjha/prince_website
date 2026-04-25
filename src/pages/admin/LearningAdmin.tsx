@@ -143,7 +143,11 @@ export default function LearningAdmin() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-text-secondary/70">Lesson Number</label>
-                  <input type="number" className="w-full px-4 py-3 rounded-xl bg-bg-primary text-text-primary" value={currentLesson?.lessonNumber} onChange={e => setCurrentLesson({...currentLesson, lessonNumber: parseInt(e.target.value)})} />
+                  <input type="number" className="w-full px-4 py-3 rounded-xl bg-bg-primary text-text-primary" value={isNaN(currentLesson?.lessonNumber as any) ? '' : currentLesson?.lessonNumber} onChange={e => {
+                    const val = parseInt(e.target.value);
+                    setCurrentLesson({...currentLesson, lessonNumber: isNaN(val) ? 0 : val});
+                  }} />
+               
                </div>
                <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-text-secondary/70">Status</label>

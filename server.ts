@@ -4,7 +4,6 @@
 // import { fileURLToPath } from 'url';
 // import fs from 'fs/promises';
 // import dotenv from 'dotenv';
-// import multer from 'multer';
 // import { OAuth2Client } from 'google-auth-library';
 // import nodemailer from 'nodemailer';
 
@@ -14,7 +13,6 @@
 // const __dirname = path.dirname(__filename);
 
 // const DATA_DIR = path.join(__dirname, 'data');
-// const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 // const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID;
 // const ADMIN_EMAIL_WHITELIST = ['pjha3913@gmail.com']; // From metadata
@@ -22,7 +20,6 @@
 
 // async function ensureDirs() {
 //   try { await fs.access(DATA_DIR); } catch { await fs.mkdir(DATA_DIR); }
-//   try { await fs.access(UPLOADS_DIR); } catch { await fs.mkdir(UPLOADS_DIR); }
 //   const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 //   try { await fs.access(SESSIONS_FILE); } catch { await fs.writeFile(SESSIONS_FILE, '[]', 'utf-8'); }
 // }
@@ -66,16 +63,6 @@
 //   await ensureDirs();
 
 //   app.use(express.json());
-//   app.use('/uploads', express.static(UPLOADS_DIR));
-
-//   const storage = multer.diskStorage({
-//     destination: (req, file, cb) => cb(null, UPLOADS_DIR),
-//     filename: (req, file, cb) => {
-//       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-//       cb(null, uniqueSuffix + path.extname(file.originalname));
-//     }
-//   });
-//   const upload = multer({ storage });
 
 //   // Admin Session Store
 //   const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
@@ -159,15 +146,7 @@
 //     }
 //   });
 
-//   app.post('/api/upload', isAdmin, upload.single('image'), (req, res) => {
-//     if (!req.file) {
-//       console.error('Upload failed: No file in request');
-//       return res.status(400).json({ message: 'No file uploaded' });
-//     }
-//     const url = `/uploads/${req.file.filename}`;
-//     console.log(`File uploaded successfully: ${url}`);
-//     res.json({ url });
-//   });
+
 
 //   const setupCRUD = (entity: string, filename: string) => {
 //     app.get(`/api/${entity}`, async (req, res) => {
@@ -313,6 +292,7 @@
 // }
 
 // startServer();
+
 
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
@@ -465,47 +445,65 @@ async function startServer() {
 
 
   const setupCRUD = (entity: string, filename: string) => {
-    app.get(`/api/${entity}`, async (req, res) => {
-      const data = await readData(filename);
-      res.json(data);
-    });
-
-    app.post(`/api/${entity}`, isAdmin, async (req, res) => {
-      const data = await readData(filename);
-      const newItem = { ...req.body, id: Date.now().toString() + Math.random().toString(36).substr(2, 5), createdAt: new Date().toISOString() };
-      data.push(newItem);
-      await writeData(filename, data);
-      res.json(newItem);
-    });
-
-    app.put(`/api/${entity}/:id`, isAdmin, async (req, res) => {
-      let data = await readData(filename);
-      const index = data.findIndex((item: any) => item.id === req.params.id);
-      if (index !== -1) {
-        data[index] = { ...data[index], ...req.body, updatedAt: new Date().toISOString() };
-        await writeData(filename, data);
-        res.json(data[index]);
-      } else {
-        res.status(404).json({ message: 'Not found' });
+    const route = `/api/${entity}`;
+    
+    app.get(route, async (req, res, next) => {
+      try {
+        const data = await readData(filename);
+        res.json(data);
+      } catch (err) {
+        next(err);
       }
     });
 
-    app.delete(`/api/${entity}/:id`, isAdmin, async (req, res) => {
-      let data = await readData(filename);
-      data = data.filter((item: any) => item.id !== req.params.id);
-      await writeData(filename, data);
-      res.json({ success: true });
+    app.post(route, isAdmin, async (req, res, next) => {
+      try {
+        const data = await readData(filename);
+        const newItem = { 
+          ...req.body, 
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 5), 
+          createdAt: new Date().toISOString() 
+        };
+        data.push(newItem);
+        await writeData(filename, data);
+        res.json(newItem);
+      } catch (err) {
+        console.error(`Error in POST ${route}:`, err);
+        next(err);
+      }
+    });
+
+    app.put(`${route}/:id`, isAdmin, async (req, res, next) => {
+      try {
+        let data = await readData(filename);
+        const index = data.findIndex((item: any) => item.id === req.params.id);
+        if (index !== -1) {
+          data[index] = { ...data[index], ...req.body, updatedAt: new Date().toISOString() };
+          await writeData(filename, data);
+          res.json(data[index]);
+        } else {
+          res.status(404).json({ message: 'Not found' });
+        }
+      } catch (err) {
+        console.error(`Error in PUT ${route}:`, err);
+        next(err);
+      }
+    });
+
+    app.delete(`${route}/:id`, isAdmin, async (req, res, next) => {
+      try {
+        let data = await readData(filename);
+        data = data.filter((item: any) => item.id !== req.params.id);
+        await writeData(filename, data);
+        res.json({ success: true });
+      } catch (err) {
+        console.error(`Error in DELETE ${route}:`, err);
+        next(err);
+      }
     });
   };
 
-  // Add error handling for multer and other routes
-  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Server Error:', err);
-    res.status(err.status || 500).json({ 
-      message: err.message || 'Internal Server Error',
-      error: process.env.NODE_ENV === 'development' ? err : undefined
-    });
-  });
+  // Error handler moved after routes
 
   setupCRUD('projects', 'projects.json');
   setupCRUD('blog', 'blog.json');
@@ -514,6 +512,14 @@ async function startServer() {
   setupCRUD('learning/lessons', 'lessons.json');
   setupCRUD('experience', 'experience.json');
   setupCRUD('skills', 'skills.json');
+
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Server API Error:', err);
+    res.status(err.status || 500).json({ 
+      message: err.message || 'Internal Server Error',
+      error: process.env.NODE_ENV === 'development' ? err : undefined
+    });
+  });
 
   app.get('/api/profile', async (req, res) => {
     const data = await readData('profile.json');
