@@ -3,7 +3,7 @@ import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Briefcase, BookOpen, PenTool, MessageSquare, LogOut, Plus, Edit, Trash2, Check, X, Award } from 'lucide-react';
 import { api } from '@/src/lib/api';
 import { cn } from '@/src/lib/utils';
-import ProjectsAdmin from './ProjectsAdmin';
+// import ProjectsAdmin from './ProjectsAdmin';
 import BlogAdmin from './BlogAdmin';
 import CreativeAdmin from './CreativeAdmin';
 import LearningAdmin from './LearningAdmin';
