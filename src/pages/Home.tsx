@@ -127,33 +127,33 @@ export default function Home() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="max-w-xl w-full bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 text-center"
+              className="max-w-xl w-full bg-bg-secondary rounded-[2.5rem] p-10 shadow-2xl border border-border-theme text-center"
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-16 h-16 bg-[#E67E22]/10 text-[#E67E22] rounded-full flex items-center justify-center mx-auto mb-8">
+              <div className="w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-8">
                 <History className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl font-serif font-bold text-[#1A1A2E] mb-4 italic">A map is not the terrain.</h3>
-              <p className="text-gray-500 font-story italic leading-relaxed mb-10">
+              <h3 className="text-2xl font-serif font-bold text-text-primary mb-4 italic">A map is not the terrain.</h3>
+              <p className="text-text-secondary font-story italic leading-relaxed mb-10">
                 A resume captures the milestones, but the journey captures the soul. While you're welcome to the map, I invite you to explore the nuances of the journey first.
               </p>
               <div className="flex flex-col gap-4">
                 <button 
                   onClick={() => navigate('/about')}
-                  className="w-full bg-[#E67E22] text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-[#D35400] transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-brand text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-brand/90 transition-all flex items-center justify-center gap-2"
                 >
                   Explore the journey first <ArrowRight className="w-4 h-4" />
                 </button>
                 <div className="grid grid-cols-2 gap-4">
                   <button 
                     onClick={handleDownloadResume}
-                    className="bg-gray-50 text-gray-700 border border-gray-100 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#E67E22] hover:text-white hover:border-[#E67E22] transition-all"
+                    className="bg-bg-primary text-text-secondary border border-border-theme py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-brand hover:text-white hover:border-brand transition-all"
                   >
                     I'll read it after this
                   </button>
                   <button 
                     onClick={() => navigate('/about#professional')}
-                    className="bg-gray-50 text-gray-700 border border-gray-100 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#E67E22] hover:text-white hover:border-[#E67E22] transition-all"
+                    className="bg-bg-primary text-text-secondary border border-border-theme py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-brand hover:text-white hover:border-brand transition-all"
                   >
                     Take me there
                   </button>
@@ -161,7 +161,7 @@ export default function Home() {
               </div>
               <button 
                 onClick={() => setShowResumeModal(false)}
-                className="mt-8 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#E67E22] transition-colors"
+                className="mt-8 text-[10px] font-bold uppercase tracking-widest text-text-secondary/40 hover:text-brand transition-colors"
               >
                 Maybe later
               </button>
@@ -209,7 +209,7 @@ export default function Home() {
                           const path = prompt("Enter local image path:", data.profile?.profileImage);
                           if (path) handleImagePathUpdate(path);
                         }}
-                        className="bg-white text-black px-4 py-1.5 rounded-full font-bold text-[10px] uppercase shadow-lg"
+                        className="bg-brand text-white px-4 py-1.5 rounded-full font-bold text-[10px] uppercase shadow-lg border border-white/20"
                       >
                         Update
                       </button>
@@ -244,7 +244,7 @@ export default function Home() {
               {isAdmin && (
                 <Link 
                   to="/admin/skills"
-                  className="absolute -top-4 right-0 p-3 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 group-hover/skills:opacity-100 transition-opacity z-10 flex items-center gap-2 text-xs font-bold text-[#E67E22] hover:bg-gray-50"
+                  className="absolute -top-4 right-0 p-3 bg-bg-secondary border border-border-theme rounded-xl shadow-lg opacity-0 group-hover/skills:opacity-100 transition-opacity z-10 flex items-center gap-2 text-xs font-bold text-brand hover:bg-bg-primary"
                   title="Modify Skills"
                 >
                   <Edit className="w-4 h-4" /> Edit Technical Assets
@@ -355,17 +355,17 @@ export default function Home() {
               {/* Admin Path Trigger */}
               {isAdmin && (
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 text-center text-white">
-                  <div className="p-4 rounded-full bg-[#E67E22] mb-4">
+                  <div className="p-4 rounded-full bg-brand mb-4">
                     <Camera className="w-8 h-8" />
                   </div>
                   <p className="text-sm font-bold uppercase tracking-widest mb-4 text-white">Change Profile Picture</p>
                   <button 
                     onClick={() => {
-                      const path = prompt("Enter local image path (e.g. /images/about/profile.png):", data.profile?.profileImage);
+                      const path = prompt("Enter local image path (e.g. /images/about/profile.png):", data.profile?.profileImage || "/images/about/My_latest_pic.jpeg");
                       if (path) handleImagePathUpdate(path);
                     }}
                     disabled={uploading}
-                    className="bg-white text-[#1A1A2E] px-6 py-2 rounded-full font-bold text-xs uppercase hover:bg-gray-100 transition-colors"
+                    className="bg-white text-brand px-6 py-2 rounded-full font-bold text-xs uppercase hover:bg-bg-primary transition-colors"
                   >
                     {uploading ? 'Processing...' : 'Change Image Path'}
                   </button>
@@ -401,7 +401,7 @@ export default function Home() {
             </p>
             
             {data.creative && (
-              <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-border-theme mb-8 group cursor-pointer hover:bg-white transition-all shadow-sm" onClick={() => navigate(`/verses?id=${data.creative.id}`)}>
+              <div className="bg-bg-primary/50 backdrop-blur-sm p-6 rounded-2xl border border-border-theme mb-8 group cursor-pointer hover:bg-bg-secondary transition-all shadow-sm" onClick={() => navigate(`/verses?id=${data.creative.id}`)}>
                  <p className="text-[10px] font-bold uppercase tracking-widest text-brand mb-2">Latest Reflection</p>
                  <h4 className="text-lg font-serif font-bold text-text-primary mb-2">"{data.creative.title}"</h4>
                  <p className="text-sm text-text-secondary line-clamp-2 italic font-story">

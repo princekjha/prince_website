@@ -187,7 +187,7 @@ export default function Navbar() {
                     localStorage.removeItem('admin_token');
                     window.location.reload();
                   }}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-2 text-text-secondary hover:text-red-500 transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-5 h-5" />

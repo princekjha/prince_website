@@ -60,6 +60,24 @@
   p {
     color: var(--text-secondary);
   }
+  
+  .prose {
+    --tw-prose-body: var(--text-secondary);
+    --tw-prose-headings: var(--text-primary);
+    --tw-prose-links: var(--color-brand);
+    --tw-prose-bold: var(--text-primary);
+    --tw-prose-counters: var(--text-secondary);
+    --tw-prose-bullets: var(--text-secondary);
+    --tw-prose-hr: var(--border-color);
+    --tw-prose-quotes: var(--text-primary);
+    --tw-prose-quote-borders: var(--border-color);
+    --tw-prose-captions: var(--text-secondary);
+    --tw-prose-code: var(--text-primary);
+    --tw-prose-pre-code: var(--text-primary);
+    --tw-prose-pre-bg: var(--bg-primary);
+    --tw-prose-th-borders: var(--border-color);
+    --tw-prose-td-borders: var(--border-color);
+  }
 }
 
 /* Custom Scrollbar */
@@ -72,11 +90,11 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E5E7EB;
+  background: var(--border-color);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #D1D5DB;
+  background: var(--text-secondary);
+  opacity: 0.5;
 }
-
