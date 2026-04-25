@@ -81,7 +81,7 @@ export default function Home() {
 
   const handleDownloadResume = () => {
     // Replace with actual resume URL when available
-    const resumeUrl = "/resume-prince-kumar-jha.pdf"; 
+    const resumeUrl = "public/Prince_Resume_DS2.pdf"; 
     const link = document.createElement('a');
     link.href = resumeUrl;
     link.download = "Prince_Kumar_Jha_Resume.pdf";
